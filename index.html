@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Genting Wild — Nature Discovery App</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'DM Sans', -apple-system, sans-serif;
+      background: #1B4332;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    ::-webkit-scrollbar { width: 0; }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(30px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+    @keyframes scanLine {
+      0% { top: 0%; }
+      100% { top: 100%; }
+    }
+    @keyframes breathe {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.8; }
+    }
+    @keyframes progressFill {
+      from { width: 0%; }
+      to { width: var(--target-width); }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // ─── FONTS ───
+    const FONTS = {
+      display: "'DM Serif Display', Georgia, serif",
+      body: "'DM Sans', -apple-system, sans-serif",
+      mono: "'JetBrains Mono', monospace",
+    };
+
+    // ─── COLORS ───
+    const COLORS = {
+      forest: "#1B4332", forestLight: "#2D6A4F", canopy: "#40916C", leaf: "#52B788",
+      mint: "#95D5B2", cream: "#FEFAE0", sand: "#DDA15E", earth: "#BC6C25", bark: "#774936",
+      white: "#FFFFFF", offWhite: "#F8F9F2", gray100: "#F3F4F1", gray200: "#E5E7E1",
+      gray300: "#D1D3CB", gray500: "#8A8D82", gray700: "#4A4D44", gray900: "#1A1D14",
+      danger: "#D62828", warning: "#F77F00", accent: "#E76F51",
+    };
+
+    // ─── ICONS ───
+    const IconHome = () => (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>);
+    const IconMap = () => (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>);
+    const IconCamera = () => (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>);
+    const IconBook = () => (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>);
+    const IconAward = () => (<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>);
+    const IconLeaf = () => (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 20A7 7 0 019.8 6.9C15.5 4.9 17 3.5 19 2c1 2 2 4.5 1 8-1.5 3.5-2 6-2 6s1.5-2 3.5-4"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>);
+    const IconChevronRight = () => (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>);
+    const IconChevronLeft = () => (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>);
+    const IconClock = () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>);
+    const IconZap = () => (<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>);
+    const IconShield = () => (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>);
+    const IconInfo = () => (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>);
+    const IconCheck = () => (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>);
+    const IconTarget = () => (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>);
+    const IconPlay = () => (<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>);
+    const IconWind = () => (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.59 4.59A2 2 0 1111 8H2m10.59 11.41A2 2 0 1014 16H2m15.73-8.27A2.5 2.5 0 1119.5 12H2"/></svg>);
+    const IconDroplet = () => (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg>);
+    const IconLock = () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>);
+
+    // ─── DATA ───
+    const TRAILS = [
+      { id: 1, name: "Rainforest Canopy Walk", difficulty: "Easy", duration: "45 min", distance: "1.2 km", species: 24, description: "Discover the upper canopy ecosystem of Genting's tropical rainforest. Spot hornbills, gibbons, and rare orchids along suspended walkways.", highlights: ["Ancient Dipterocarp Trees", "Hornbill Nesting Site", "Orchid Garden Lookout", "Canopy Observation Deck"], color: "#2D6A4F", emoji: "🌿", arFeatures: 8, storyPoints: 5 },
+      { id: 2, name: "Wildlife Corridor Trail", difficulty: "Moderate", duration: "1.5 hrs", distance: "3.4 km", species: 37, description: "Follow the reforestation corridor where native species are returning. Learn about habitat restoration and see wildlife up close.", highlights: ["Reforestation Zone", "Monkey Crossing Bridge", "Snake Awareness Point", "Seed Nursery"], color: "#40916C", emoji: "🐒", arFeatures: 12, storyPoints: 8 },
+      { id: 3, name: "Mountain Stream Path", difficulty: "Challenging", duration: "2.5 hrs", distance: "5.1 km", species: 42, description: "Trek alongside Genting's pristine mountain streams. Understand water ecosystems and the critical role of watershed conservation.", highlights: ["Waterfall Viewpoint", "Amphibian Habitat", "Erosion Prevention Demo", "Slope Protection Area"], color: "#1B4332", emoji: "💧", arFeatures: 15, storyPoints: 10 },
+    ];
+
+    const WILDLIFE = [
+      { id: 1, name: "Dusky Leaf Monkey", status: "Near Threatened", family: "Cercopithecidae", habitat: "Canopy layer", emoji: "🐒", fact: "These primates play a crucial role in seed dispersal, helping regenerate the rainforest.", color: "#774936" },
+      { id: 2, name: "Rhinoceros Hornbill", status: "Vulnerable", family: "Bucerotidae", habitat: "Upper canopy", emoji: "🦅", fact: "Hornbills are key indicators of forest health. Their presence signals a thriving ecosystem.", color: "#BC6C25" },
+      { id: 3, name: "Malayan Pit Viper", status: "Least Concern", family: "Viperidae", habitat: "Forest floor", emoji: "🐍", fact: "These snakes control rodent populations, protecting crops and preventing disease spread.", color: "#606C38" },
+      { id: 4, name: "Sumatran Laughingthrush", status: "Endangered", family: "Leiothrichidae", habitat: "Montane forest", emoji: "🐦", fact: "Their melodic calls are becoming rarer — habitat loss has shrunk their range by over 50%.", color: "#DDA15E" },
+      { id: 5, name: "Colugo (Flying Lemur)", status: "Least Concern", family: "Cynocephalidae", habitat: "Tree hollows", emoji: "🦇", fact: "Despite their name, colugos don't actually fly — they glide up to 70 metres between trees.", color: "#588157" },
+      { id: 6, name: "Rafflesia", status: "Critically Endangered", family: "Rafflesiaceae", habitat: "Forest floor", emoji: "🌺", fact: "The world's largest flower, it blooms for just 5-7 days and relies on specific host vines.", color: "#9B2226" },
+    ];
+
+    const STORIES = [
+      { id: 1, title: "The Ranger's Dilemma", subtitle: "How do you educate 3 million visitors?", duration: "4 min", type: "Interactive Story", emoji: "🌍", color: "#264653", preview: "Ranger Ahmad faces an impossible task: 28.7 million visitors, one fragile ecosystem. Step into his shoes and discover how technology might hold the answer.", chapters: 5 },
+      { id: 2, title: "Return of the Hornbills", subtitle: "A reforestation success story", duration: "6 min", type: "AR Documentary", emoji: "🦅", color: "#2A9D8F", preview: "After decades of development, hornbills are nesting at Genting again. Watch the AR-enhanced story of how shade trees became a forest.", chapters: 7 },
+      { id: 3, title: "Seeds of Tomorrow", subtitle: "Your actions shape the forest", duration: "5 min", type: "Choose Your Path", emoji: "🌱", color: "#E76F51", preview: "Every choice a visitor makes — where they step, what they touch, what they leave behind — shapes the forest's future. Make your choices count.", chapters: 6 },
+    ];
+
+    const BADGES = [
+      { id: 1, name: "First Steps", desc: "Complete your first trail", earned: true, emoji: "🥾", xp: 50 },
+      { id: 2, name: "Wildlife Spotter", desc: "Identify 5 species with AR", earned: true, emoji: "🔍", xp: 100 },
+      { id: 3, name: "Story Listener", desc: "Complete 1 conservation story", earned: true, emoji: "📖", xp: 75 },
+      { id: 4, name: "Eco Warrior", desc: "Complete all eco-actions", earned: false, emoji: "🛡️", xp: 200 },
+      { id: 5, name: "Trail Master", desc: "Finish all 3 trails", earned: false, emoji: "🏔️", xp: 300 },
+      { id: 6, name: "Nature Guardian", desc: "Earn 1000 XP total", earned: false, emoji: "🌟", xp: 500 },
+    ];
+
+    const ECO_ACTIONS = [
+      { id: 1, title: "Stay on the trail", done: true, xp: 20, icon: "🥾" },
+      { id: 2, title: "Don't feed the monkeys", done: true, xp: 20, icon: "🐒" },
+      { id: 3, title: "Pick up 1 piece of litter", done: false, xp: 30, icon: "🗑️" },
+      { id: 4, title: "Share a conservation post", done: false, xp: 40, icon: "📱" },
+      { id: 5, title: "Take the conservation pledge", done: false, xp: 50, icon: "✊" },
+    ];
+
+    // ─── HELPERS ───
+    function AnimatedNumber({ value, duration = 1000 }) {
+      const [display, setDisplay] = useState(0);
+      useEffect(() => {
+        let start = 0;
+        const increment = value / (duration / 16);
+        const timer = setInterval(() => {
+          start += increment;
+          if (start >= value) { setDisplay(value); clearInterval(timer); }
+          else setDisplay(Math.floor(start));
+        }, 16);
+        return () => clearInterval(timer);
+      }, [value]);
+      return React.createElement('span', null, display);
+    }
+
+    function ProgressBar({ progress, color = COLORS.leaf, height = 6, delay = 0 }) {
+      return React.createElement('div', { style: { width: "100%", height, background: COLORS.gray200, borderRadius: height / 2, overflow: "hidden" } },
+        React.createElement('div', { style: {
+          height: "100%", width: progress + "%",
+          background: "linear-gradient(90deg, " + color + ", " + COLORS.mint + ")",
+          borderRadius: height / 2,
+          animation: "progressFill 1.2s ease-out " + delay + "s both",
+          "--target-width": progress + "%",
+        }})
+      );
+    }
+
+    // ─── HOME SCREEN ───
+    function HomeScreen({ onNavigate, setSelectedTrail, setSelectedWildlife, setSelectedStory }) {
+      const userXP = 225, userLevel = 3, nextLevelXP = 400;
+
+      return (
+        <div style={{ padding: "0 0 100px 0", background: COLORS.offWhite, minHeight: "100%" }}>
+          <div style={{ background: "linear-gradient(165deg, " + COLORS.forest + " 0%, " + COLORS.forestLight + " 50%, " + COLORS.canopy + " 100%)", padding: "48px 24px 36px", borderRadius: "0 0 32px 32px", position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", top: -20, right: -20, width: 120, height: 120, borderRadius: "50%", background: "rgba(82,183,136,0.1)" }} />
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24, animation: "fadeIn 0.6s ease-out" }}>
+              <div>
+                <p style={{ fontFamily: FONTS.body, fontSize: 13, color: COLORS.mint, letterSpacing: 1.5, textTransform: "uppercase", fontWeight: 500, marginBottom: 6 }}>Welcome Back</p>
+                <h1 style={{ fontFamily: FONTS.display, fontSize: 30, color: COLORS.white, lineHeight: 1.1 }}>Genting Wild</h1>
+              </div>
+              <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                <span style={{ fontSize: 22 }}>🌿</span>
+              </div>
+            </div>
+            <div style={{ background: "rgba(255,255,255,0.1)", backdropFilter: "blur(20px)", borderRadius: 20, padding: "18px 20px", border: "1px solid rgba(255,255,255,0.12)", animation: "fadeInUp 0.7s ease-out 0.2s both" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg, " + COLORS.sand + ", " + COLORS.accent + ")", display: "flex", alignItems: "center", justifyContent: "center" }}><IconZap /></div>
+                  <div>
+                    <p style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", fontWeight: 500, textTransform: "uppercase", letterSpacing: 1 }}>Level {userLevel}</p>
+                    <p style={{ fontSize: 15, color: COLORS.white, fontWeight: 600 }}>Forest Explorer</p>
+                  </div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <p style={{ fontSize: 22, color: COLORS.mint, fontWeight: 700, fontFamily: FONTS.mono }}>{userXP}</p>
+                  <p style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: 0.8 }}>XP earned</p>
+                </div>
+              </div>
+              <ProgressBar progress={(userXP / nextLevelXP) * 100} color={COLORS.mint} height={5} />
+              <p style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 8, textAlign: "right" }}>{nextLevelXP - userXP} XP to Level {userLevel + 1}</p>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div style={{ padding: "24px 24px 0", animation: "fadeInUp 0.7s ease-out 0.3s both" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+              {[
+                { label: "AR Scan", icon: <IconCamera />, color: COLORS.accent, screen: "wildlife" },
+                { label: "My Badges", icon: <IconAward />, color: COLORS.sand, screen: "progress" },
+                { label: "Eco Actions", icon: <IconShield />, color: COLORS.canopy, screen: "progress" },
+              ].map((a, i) => (
+                <button key={i} onClick={() => onNavigate(a.screen)} style={{ background: COLORS.white, border: "1px solid " + COLORS.gray200, borderRadius: 16, padding: "18px 8px 14px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, transition: "all 0.2s", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,0,0,0.08)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)"; }}>
+                  <div style={{ width: 42, height: 42, borderRadius: 12, background: a.color + "14", color: a.color, display: "flex", alignItems: "center", justifyContent: "center" }}>{a.icon}</div>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: COLORS.gray700 }}>{a.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Weather */}
+          <div style={{ padding: "20px 24px 0", animation: "fadeInUp 0.7s ease-out 0.35s both" }}>
+            <div style={{ background: "linear-gradient(135deg, #E8F5E9, #C8E6C9)", borderRadius: 16, padding: "14px 18px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ fontSize: 28 }}>⛅</span>
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: COLORS.forest }}>22°C at Genting Awana</p>
+                  <p style={{ fontSize: 11, color: COLORS.canopy }}>Perfect for a rainforest trail</p>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 10, color: COLORS.forestLight }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 11 }}><IconDroplet /> 78%</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 11 }}><IconWind /> 8km/h</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Trails */}
+          <div style={{ padding: "28px 24px 0", animation: "fadeInUp 0.7s ease-out 0.4s both" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div>
+                <h2 style={{ fontFamily: FONTS.display, fontSize: 22, color: COLORS.gray900 }}>Discovery Trails</h2>
+                <p style={{ fontSize: 13, color: COLORS.gray500, marginTop: 2 }}>AR-guided nature experiences</p>
+              </div>
+              <button onClick={() => onNavigate("trails")} style={{ fontSize: 13, color: COLORS.canopy, fontWeight: 600, background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 2 }}>View all <IconChevronRight /></button>
+            </div>
+            <div style={{ display: "flex", gap: 14, overflowX: "auto", paddingBottom: 8, margin: "0 -24px", padding: "0 24px 8px" }}>
+              {TRAILS.map((trail, i) => (
+                <div key={trail.id} onClick={() => { setSelectedTrail(trail); onNavigate("trailDetail"); }}
+                  style={{ minWidth: 240, background: COLORS.white, borderRadius: 20, overflow: "hidden", cursor: "pointer", border: "1px solid " + COLORS.gray200, transition: "all 0.25s", boxShadow: "0 2px 12px rgba(0,0,0,0.04)", animation: "slideInRight 0.6s ease-out " + (0.1 * i) + "s both" }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 32px rgba(0,0,0,0.1)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.04)"; }}>
+                  <div style={{ height: 130, background: "linear-gradient(135deg, " + trail.color + ", " + trail.color + "CC)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+                    <span style={{ fontSize: 52, animation: "float 3s ease-in-out infinite" }}>{trail.emoji}</span>
+                    <div style={{ position: "absolute", top: 12, right: 12, background: "rgba(255,255,255,0.2)", backdropFilter: "blur(8px)", borderRadius: 8, padding: "4px 10px" }}>
+                      <span style={{ fontSize: 11, color: "white", fontWeight: 600 }}>{trail.difficulty}</span>
+                    </div>
+                  </div>
+                  <div style={{ padding: "14px 16px 16px" }}>
+                    <h3 style={{ fontSize: 15, fontWeight: 700, color: COLORS.gray900, marginBottom: 6, lineHeight: 1.3 }}>{trail.name}</h3>
+                    <div style={{ display: "flex", gap: 12, fontSize: 12, color: COLORS.gray500 }}>
+                      <span style={{ display: "flex", alignItems: "center", gap: 3 }}><IconClock /> {trail.duration}</span>
+                      <span style={{ display: "flex", alignItems: "center", gap: 3 }}><IconLeaf /> {trail.species} species</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Stories */}
+          <div style={{ padding: "28px 24px 0", animation: "fadeInUp 0.7s ease-out 0.5s both" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div>
+                <h2 style={{ fontFamily: FONTS.display, fontSize: 22, color: COLORS.gray900 }}>Conservation Stories</h2>
+                <p style={{ fontSize: 13, color: COLORS.gray500, marginTop: 2 }}>Digital storytelling experiences</p>
+              </div>
+              <button onClick={() => onNavigate("stories")} style={{ fontSize: 13, color: COLORS.canopy, fontWeight: 600, background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 2 }}>View all <IconChevronRight /></button>
+            </div>
+            {STORIES.slice(0, 2).map((story, i) => (
+              <div key={story.id} onClick={() => { setSelectedStory(story); onNavigate("storyDetail"); }}
+                style={{ background: COLORS.white, borderRadius: 20, padding: 18, marginBottom: 12, display: "flex", gap: 16, cursor: "pointer", border: "1px solid " + COLORS.gray200, transition: "all 0.2s", boxShadow: "0 2px 8px rgba(0,0,0,0.03)", animation: "fadeInUp 0.6s ease-out " + (0.15 * i) + "s both" }}
+                onMouseEnter={e => { e.currentTarget.style.transform = "translateX(4px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.08)"; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = "translateX(0)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.03)"; }}>
+                <div style={{ width: 64, height: 64, borderRadius: 16, flexShrink: 0, background: "linear-gradient(135deg, " + story.color + ", " + story.color + "BB)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ fontSize: 28 }}>{story.emoji}</span>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 10, color: COLORS.accent, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>{story.type}</p>
+                  <h3 style={{ fontSize: 15, fontWeight: 700, color: COLORS.gray900, marginBottom: 2, lineHeight: 1.3 }}>{story.title}</h3>
+                  <p style={{ fontSize: 12, color: COLORS.gray500 }}>{story.subtitle}</p>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", color: COLORS.gray300 }}><IconChevronRight /></div>
+              </div>
+            ))}
+          </div>
+
+          {/* Impact Stats */}
+          <div style={{ padding: "28px 24px 0", animation: "fadeInUp 0.7s ease-out 0.6s both" }}>
+            <h2 style={{ fontFamily: FONTS.display, fontSize: 22, color: COLORS.gray900, marginBottom: 4 }}>Community Impact</h2>
+            <p style={{ fontSize: 13, color: COLORS.gray500, marginBottom: 16 }}>Together we're making a difference</p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              {[
+                { label: "Trees Planted", value: 1247, emoji: "🌳", color: COLORS.canopy },
+                { label: "Species Protected", value: 89, emoji: "🦎", color: COLORS.earth },
+                { label: "Visitors Educated", value: 8543, emoji: "🎓", color: COLORS.forestLight },
+                { label: "Eco Actions Done", value: 3281, emoji: "💚", color: COLORS.leaf },
+              ].map((stat, i) => (
+                <div key={i} style={{ background: COLORS.white, borderRadius: 18, padding: "18px 16px", border: "1px solid " + COLORS.gray200, boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
+                  <span style={{ fontSize: 26 }}>{stat.emoji}</span>
+                  <p style={{ fontSize: 24, fontWeight: 700, color: stat.color, fontFamily: FONTS.mono, marginTop: 8 }}><AnimatedNumber value={stat.value} duration={1500} /></p>
+                  <p style={{ fontSize: 12, color: COLORS.gray500, fontWeight: 500 }}>{stat.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ─── TRAILS SCREEN ───
+    function TrailsScreen({ onNavigate, setSelectedTrail }) {
+      return (
+        <div style={{ padding: "0 0 100px", background: COLORS.offWhite, minHeight: "100%" }}>
+          <div style={{ padding: "48px 24px 24px" }}>
+            <h1 style={{ fontFamily: FONTS.display, fontSize: 28, color: COLORS.gray900 }}>Discovery Trails</h1>
+            <p style={{ fontSize: 14, color: COLORS.gray500, marginTop: 4, lineHeight: 1.5 }}>AR-guided nature experiences through Genting Awana's rainforest.</p>
+          </div>
+          <div style={{ padding: "0 24px" }}>
+            {TRAILS.map((trail, i) => (
+              <div key={trail.id} onClick={() => { setSelectedTrail(trail); onNavigate("trailDetail"); }}
+                style={{ background: COLORS.white, borderRadius: 24, overflow: "hidden", marginBottom: 16, cursor: "pointer", border: "1px solid " + COLORS.gray200, transition: "all 0.25s", boxShadow: "0 2px 12px rgba(0,0,0,0.04)", animation: "fadeInUp 0.6s ease-out " + (0.12 * i) + "s both" }}
+                onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 12px 36px rgba(0,0,0,0.1)"; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.04)"; }}>
+                <div style={{ height: 160, background: "linear-gradient(135deg, " + trail.color + ", " + trail.color + "99)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+                  <span style={{ fontSize: 64, animation: "float 3s ease-in-out infinite" }}>{trail.emoji}</span>
+                  <div style={{ position: "absolute", top: 16, left: 16, display: "flex", gap: 8 }}>
+                    <span style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(8px)", borderRadius: 8, padding: "5px 12px", fontSize: 12, color: "white", fontWeight: 600 }}>{trail.difficulty}</span>
+                    <span style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(8px)", borderRadius: 8, padding: "5px 12px", fontSize: 12, color: "white", fontWeight: 600 }}>{trail.distance}</span>
+                  </div>
+                  <div style={{ position: "absolute", bottom: 16, right: 16, background: "rgba(255,255,255,0.2)", backdropFilter: "blur(8px)", borderRadius: 10, padding: "6px 12px", display: "flex", alignItems: "center", gap: 6 }}>
+                    <IconCamera /><span style={{ fontSize: 12, color: "white", fontWeight: 600 }}>{trail.arFeatures} AR Points</span>
+                  </div>
+                </div>
+                <div style={{ padding: "18px 20px 20px" }}>
+                  <h3 style={{ fontSize: 18, fontWeight: 700, color: COLORS.gray900, marginBottom: 6, fontFamily: FONTS.display }}>{trail.name}</h3>
+                  <p style={{ fontSize: 13, color: COLORS.gray500, lineHeight: 1.5, marginBottom: 14 }}>{trail.description}</p>
+                  <div style={{ display: "flex", gap: 16, fontSize: 12, color: COLORS.gray500 }}>
+                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}><IconClock /> {trail.duration}</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}><IconLeaf /> {trail.species} species</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}><IconBook /> {trail.storyPoints} stories</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ─── TRAIL DETAIL ───
+    function TrailDetailScreen({ trail, onBack }) {
+      const [started, setStarted] = useState(false);
+      if (!trail) return null;
+      return (
+        <div style={{ background: COLORS.offWhite, minHeight: "100%", paddingBottom: 100 }}>
+          <div style={{ height: 260, background: "linear-gradient(160deg, " + trail.color + ", " + trail.color + "BB)", position: "relative", display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "0 24px 24px" }}>
+            <button onClick={onBack} style={{ position: "absolute", top: 48, left: 20, width: 40, height: 40, borderRadius: 12, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "white" }}><IconChevronLeft /></button>
+            <span style={{ fontSize: 72, position: "absolute", right: 24, top: 60, animation: "float 4s ease-in-out infinite", opacity: 0.6 }}>{trail.emoji}</span>
+            <div style={{ animation: "fadeInUp 0.6s ease-out" }}>
+              <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                {[trail.difficulty, trail.distance, trail.duration].map((tag, i) => (<span key={i} style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(8px)", borderRadius: 8, padding: "4px 12px", fontSize: 12, color: "white", fontWeight: 500 }}>{tag}</span>))}
+              </div>
+              <h1 style={{ fontFamily: FONTS.display, fontSize: 28, color: "white", lineHeight: 1.2 }}>{trail.name}</h1>
+            </div>
+          </div>
+          <div style={{ padding: 24 }}>
+            <p style={{ fontSize: 14, color: COLORS.gray700, lineHeight: 1.7, marginBottom: 24 }}>{trail.description}</p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 24 }}>
+              {[{ label: "Species", value: trail.species, icon: <IconLeaf /> }, { label: "AR Points", value: trail.arFeatures, icon: <IconCamera /> }, { label: "Stories", value: trail.storyPoints, icon: <IconBook /> }].map((s, i) => (
+                <div key={i} style={{ background: COLORS.white, borderRadius: 16, padding: "14px 12px", textAlign: "center", border: "1px solid " + COLORS.gray200 }}>
+                  <div style={{ color: trail.color, display: "flex", justifyContent: "center", marginBottom: 6 }}>{s.icon}</div>
+                  <p style={{ fontSize: 20, fontWeight: 700, color: COLORS.gray900, fontFamily: FONTS.mono }}>{s.value}</p>
+                  <p style={{ fontSize: 11, color: COLORS.gray500, fontWeight: 500 }}>{s.label}</p>
+                </div>
+              ))}
+            </div>
+            <h3 style={{ fontFamily: FONTS.display, fontSize: 18, color: COLORS.gray900, marginBottom: 14 }}>Trail Highlights</h3>
+            {trail.highlights.map((h, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", background: COLORS.white, borderRadius: 14, marginBottom: 8, border: "1px solid " + COLORS.gray200 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: trail.color + "14", color: trail.color, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 14, fontFamily: FONTS.mono }}>{i + 1}</div>
+                <span style={{ fontSize: 14, fontWeight: 500, color: COLORS.gray700 }}>{h}</span>
+              </div>
+            ))}
+            <button onClick={() => setStarted(!started)} style={{ width: "100%", padding: 18, borderRadius: 16, border: "none", cursor: "pointer", marginTop: 16, background: started ? COLORS.white : "linear-gradient(135deg, " + trail.color + ", " + COLORS.canopy + ")", color: started ? trail.color : "white", fontSize: 16, fontWeight: 700, fontFamily: FONTS.body, boxShadow: started ? "inset 0 0 0 2px " + trail.color : "0 8px 24px " + trail.color + "44", transition: "all 0.3s", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+              {started ? <><IconCheck /> Trail Started — AR Mode Active</> : <><IconTarget /> Start AR Trail Experience</>}
+            </button>
+            {started && (
+              <div style={{ marginTop: 16, background: trail.color + "0A", border: "1px solid " + trail.color + "22", borderRadius: 16, padding: 18, animation: "fadeInUp 0.4s ease-out" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#4ADE80", animation: "pulse 2s ease-in-out infinite" }} />
+                  <span style={{ fontSize: 13, fontWeight: 600, color: trail.color }}>AR Mode Active</span>
+                </div>
+                <p style={{ fontSize: 13, color: COLORS.gray500, lineHeight: 1.6 }}>Point your camera at plants and animals to identify species. Conservation stories will appear at marked waypoints along the trail.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // ─── WILDLIFE SCREEN ───
+    function WildlifeScreen({ setSelectedWildlife, onNavigate }) {
+      const [scanning, setScanning] = useState(false);
+      const [scanned, setScanned] = useState(null);
+      const startScan = () => { setScanning(true); setTimeout(() => { setScanning(false); setScanned(WILDLIFE[Math.floor(Math.random() * WILDLIFE.length)]); }, 2500); };
+
+      return (
+        <div style={{ background: COLORS.offWhite, minHeight: "100%", paddingBottom: 100 }}>
+          <div style={{ padding: "48px 24px 20px" }}>
+            <h1 style={{ fontFamily: FONTS.display, fontSize: 28, color: COLORS.gray900 }}>Wildlife Discovery</h1>
+            <p style={{ fontSize: 14, color: COLORS.gray500, marginTop: 4 }}>Use AR to identify species around you</p>
+          </div>
+          <div style={{ margin: "0 24px 24px" }}>
+            <div style={{ height: 220, borderRadius: 24, overflow: "hidden", position: "relative", background: "linear-gradient(135deg, " + COLORS.forest + ", " + COLORS.forestLight + ")", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {scanning ? (
+                <>
+                  <div style={{ position: "absolute", inset: 30, border: "2px solid rgba(82,183,136,0.6)", borderRadius: 16 }}>
+                    <div style={{ position: "absolute", left: 0, right: 0, height: 2, background: "linear-gradient(90deg, transparent, " + COLORS.leaf + ", transparent)", animation: "scanLine 1.5s linear infinite" }} />
+                  </div>
+                  <div style={{ textAlign: "center", animation: "breathe 1.5s ease-in-out infinite" }}>
+                    <div style={{ width: 56, height: 56, borderRadius: "50%", border: "3px solid " + COLORS.leaf, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", background: "rgba(82,183,136,0.1)" }}><IconCamera /></div>
+                    <p style={{ color: COLORS.mint, fontSize: 14, fontWeight: 500 }}>Scanning environment...</p>
+                  </div>
+                </>
+              ) : scanned ? (
+                <div style={{ textAlign: "center", animation: "fadeInUp 0.5s ease-out", padding: 20 }}>
+                  <span style={{ fontSize: 56, display: "block", marginBottom: 12 }}>{scanned.emoji}</span>
+                  <p style={{ color: COLORS.mint, fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>Species Identified</p>
+                  <p style={{ color: "white", fontSize: 20, fontWeight: 700, fontFamily: FONTS.display }}>{scanned.name}</p>
+                  <div style={{ marginTop: 12, display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.15)", borderRadius: 8, padding: "4px 12px" }}>
+                    <span style={{ fontSize: 11, color: COLORS.mint, fontWeight: 500 }}>+25 XP earned</span>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ width: 64, height: 64, borderRadius: "50%", border: "2px dashed rgba(255,255,255,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", color: "rgba(255,255,255,0.5)" }}><IconCamera /></div>
+                  <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14 }}>Tap below to start AR scan</p>
+                </div>
+              )}
+            </div>
+            <button onClick={startScan} style={{ width: "100%", marginTop: 14, padding: 16, borderRadius: 14, background: scanning ? COLORS.gray200 : "linear-gradient(135deg, " + COLORS.canopy + ", " + COLORS.leaf + ")", color: scanning ? COLORS.gray500 : "white", border: "none", cursor: scanning ? "default" : "pointer", fontSize: 15, fontWeight: 700, fontFamily: FONTS.body, boxShadow: scanning ? "none" : "0 6px 20px " + COLORS.canopy + "44", transition: "all 0.3s" }}>
+              {scanning ? "Scanning..." : scanned ? "Scan Again" : "Start AR Scan"}
+            </button>
+          </div>
+          <div style={{ padding: "0 24px" }}>
+            <h2 style={{ fontFamily: FONTS.display, fontSize: 20, color: COLORS.gray900, marginBottom: 14 }}>Species Catalogue</h2>
+            {WILDLIFE.map((w, i) => (
+              <div key={w.id} onClick={() => { setSelectedWildlife(w); onNavigate("wildlifeDetail"); }}
+                style={{ display: "flex", alignItems: "center", gap: 14, padding: 16, background: COLORS.white, borderRadius: 18, marginBottom: 10, border: "1px solid " + COLORS.gray200, cursor: "pointer", transition: "all 0.2s", animation: "fadeInUp 0.5s ease-out " + (0.08 * i) + "s both" }}
+                onMouseEnter={e => { e.currentTarget.style.transform = "translateX(4px)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,0,0,0.06)"; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = "translateX(0)"; e.currentTarget.style.boxShadow = "none"; }}>
+                <div style={{ width: 52, height: 52, borderRadius: 14, flexShrink: 0, background: "linear-gradient(135deg, " + w.color + "22, " + w.color + "11)", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid " + w.color + "22" }}>
+                  <span style={{ fontSize: 26 }}>{w.emoji}</span>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <h4 style={{ fontSize: 14, fontWeight: 700, color: COLORS.gray900, marginBottom: 2 }}>{w.name}</h4>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.8, color: w.status === "Critically Endangered" ? COLORS.danger : w.status === "Endangered" ? COLORS.warning : w.status === "Vulnerable" ? COLORS.sand : COLORS.canopy, background: (w.status === "Critically Endangered" ? COLORS.danger : w.status === "Endangered" ? COLORS.warning : w.status === "Vulnerable" ? COLORS.sand : COLORS.canopy) + "14", padding: "2px 8px", borderRadius: 4 }}>{w.status}</span>
+                    <span style={{ fontSize: 11, color: COLORS.gray500 }}>{w.habitat}</span>
+                  </div>
+                </div>
+                <div style={{ color: COLORS.gray300 }}><IconChevronRight /></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ─── WILDLIFE DETAIL ───
+    function WildlifeDetailScreen({ wildlife, onBack }) {
+      if (!wildlife) return null;
+      return (
+        <div style={{ background: COLORS.offWhite, minHeight: "100%", paddingBottom: 100 }}>
+          <div style={{ height: 280, background: "linear-gradient(160deg, " + wildlife.color + ", " + wildlife.color + "88)", position: "relative", display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "0 24px 28px" }}>
+            <button onClick={onBack} style={{ position: "absolute", top: 48, left: 20, width: 40, height: 40, borderRadius: 12, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "white" }}><IconChevronLeft /></button>
+            <span style={{ fontSize: 80, position: "absolute", right: 24, top: 70, animation: "float 4s ease-in-out infinite", opacity: 0.5 }}>{wildlife.emoji}</span>
+            <div style={{ animation: "fadeInUp 0.6s ease-out" }}>
+              <span style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1.5, color: "white", background: "rgba(255,255,255,0.2)", borderRadius: 6, padding: "3px 10px", display: "inline-block", marginBottom: 10 }}>{wildlife.status}</span>
+              <h1 style={{ fontFamily: FONTS.display, fontSize: 28, color: "white", lineHeight: 1.2 }}>{wildlife.name}</h1>
+              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", marginTop: 4, fontStyle: "italic" }}>{wildlife.family}</p>
+            </div>
+          </div>
+          <div style={{ padding: 24 }}>
+            <div style={{ background: COLORS.white, borderRadius: 20, padding: 20, border: "1px solid " + COLORS.gray200, marginBottom: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}><IconInfo /><h3 style={{ fontSize: 15, fontWeight: 700, color: COLORS.gray900 }}>Conservation Fact</h3></div>
+              <p style={{ fontSize: 14, color: COLORS.gray700, lineHeight: 1.7 }}>{wildlife.fact}</p>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              {[{ label: "Habitat", value: wildlife.habitat, icon: "🌳" }, { label: "Family", value: wildlife.family.slice(0, 12), icon: "🧬" }, { label: "Best Time", value: "Dawn / Dusk", icon: "🌅" }, { label: "Trail", value: "Canopy Walk", icon: "🥾" }].map((item, i) => (
+                <div key={i} style={{ background: COLORS.white, borderRadius: 16, padding: "14px 16px", border: "1px solid " + COLORS.gray200 }}>
+                  <span style={{ fontSize: 22 }}>{item.icon}</span>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: COLORS.gray900, marginTop: 8 }}>{item.value}</p>
+                  <p style={{ fontSize: 11, color: COLORS.gray500 }}>{item.label}</p>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: 16, background: COLORS.sand + "12", border: "1px solid " + COLORS.sand + "33", borderRadius: 18, padding: 18 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}><IconShield /><h3 style={{ fontSize: 14, fontWeight: 700, color: COLORS.earth }}>Encounter Guidelines</h3></div>
+              <ul style={{ paddingLeft: 18, fontSize: 13, color: COLORS.gray700, lineHeight: 1.8, listStyleType: "'→ '" }}>
+                <li>Maintain at least 5 metres distance</li>
+                <li>Do not feed or attempt to touch</li>
+                <li>Move slowly and avoid loud sounds</li>
+                <li>Use AR scan to learn, not flash photography</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ─── STORIES SCREEN ───
+    function StoriesScreen({ setSelectedStory, onNavigate }) {
+      return (
+        <div style={{ background: COLORS.offWhite, minHeight: "100%", paddingBottom: 100 }}>
+          <div style={{ padding: "48px 24px 20px" }}>
+            <h1 style={{ fontFamily: FONTS.display, fontSize: 28, color: COLORS.gray900 }}>Conservation Stories</h1>
+            <p style={{ fontSize: 14, color: COLORS.gray500, marginTop: 4, lineHeight: 1.5 }}>Immersive digital narratives about Genting's wildlife and environment</p>
+          </div>
+          <div style={{ padding: "0 24px" }}>
+            {STORIES.map((story, i) => (
+              <div key={story.id} onClick={() => { setSelectedStory(story); onNavigate("storyDetail"); }}
+                style={{ background: COLORS.white, borderRadius: 24, overflow: "hidden", marginBottom: 16, cursor: "pointer", border: "1px solid " + COLORS.gray200, transition: "all 0.25s", animation: "fadeInUp 0.6s ease-out " + (0.12 * i) + "s both" }}
+                onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 12px 36px rgba(0,0,0,0.1)"; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}>
+                <div style={{ height: 140, background: "linear-gradient(135deg, " + story.color + ", " + story.color + "99)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+                  <span style={{ fontSize: 56, animation: "float 3s ease-in-out infinite" }}>{story.emoji}</span>
+                  <div style={{ position: "absolute", bottom: 14, left: 14, display: "flex", gap: 8 }}>
+                    <span style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(8px)", borderRadius: 8, padding: "4px 12px", fontSize: 11, color: "white", fontWeight: 600 }}>{story.type}</span>
+                    <span style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(8px)", borderRadius: 8, padding: "4px 12px", fontSize: 11, color: "white", fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}><IconClock /> {story.duration}</span>
+                  </div>
+                  <div style={{ position: "absolute", right: 16, bottom: -22, width: 48, height: 48, borderRadius: "50%", background: COLORS.white, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 16px rgba(0,0,0,0.15)", color: story.color }}><IconPlay /></div>
+                </div>
+                <div style={{ padding: "18px 20px 20px" }}>
+                  <h3 style={{ fontSize: 18, fontWeight: 700, color: COLORS.gray900, fontFamily: FONTS.display, marginBottom: 4 }}>{story.title}</h3>
+                  <p style={{ fontSize: 13, fontWeight: 500, color: story.color, marginBottom: 8 }}>{story.subtitle}</p>
+                  <p style={{ fontSize: 13, color: COLORS.gray500, lineHeight: 1.6 }}>{story.preview}</p>
+                  <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: COLORS.gray500 }}><IconBook /> {story.chapters} chapters</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ─── STORY DETAIL ───
+    function StoryDetailScreen({ story, onBack }) {
+      const [currentChapter, setCurrentChapter] = useState(0);
+      const [playing, setPlaying] = useState(false);
+      if (!story) return null;
+      const chapterTitles = ["The Challenge Begins", "Understanding the Ecosystem", "Voices from the Forest", "Technology Meets Nature", "A Path Forward", "Your Role in Conservation", "The Journey Continues"].slice(0, story.chapters);
+
+      return (
+        <div style={{ background: COLORS.offWhite, minHeight: "100%", paddingBottom: 100 }}>
+          <div style={{ height: 300, background: "linear-gradient(160deg, " + story.color + ", " + story.color + "99)", position: "relative", display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "0 24px 28px" }}>
+            <button onClick={onBack} style={{ position: "absolute", top: 48, left: 20, width: 40, height: 40, borderRadius: 12, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "white" }}><IconChevronLeft /></button>
+            <span style={{ fontSize: 80, position: "absolute", right: 24, top: 70, animation: "float 4s ease-in-out infinite", opacity: 0.5 }}>{story.emoji}</span>
+            <div style={{ animation: "fadeInUp 0.6s ease-out" }}>
+              <span style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1.5, color: "rgba(255,255,255,0.8)" }}>{story.type} • {story.duration}</span>
+              <h1 style={{ fontFamily: FONTS.display, fontSize: 28, color: "white", lineHeight: 1.2, marginTop: 6 }}>{story.title}</h1>
+              <p style={{ fontSize: 14, color: "rgba(255,255,255,0.75)", marginTop: 6 }}>{story.subtitle}</p>
+            </div>
+          </div>
+          <div style={{ padding: 24 }}>
+            <div style={{ background: COLORS.white, borderRadius: 20, padding: 20, marginBottom: 20, border: "1px solid " + COLORS.gray200 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
+                <button onClick={() => setPlaying(!playing)} style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg, " + story.color + ", " + story.color + "CC)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "white", boxShadow: "0 6px 20px " + story.color + "44", transition: "transform 0.2s" }}
+                  onMouseEnter={e => e.currentTarget.style.transform = "scale(1.08)"}
+                  onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>
+                  {playing ? <span style={{ width: 14, height: 16, borderLeft: "4px solid white", borderRight: "4px solid white" }} /> : <IconPlay />}
+                </button>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: COLORS.gray900 }}>Chapter {currentChapter + 1}: {chapterTitles[currentChapter]}</p>
+                  <p style={{ fontSize: 12, color: COLORS.gray500, marginTop: 2 }}>{playing ? "Now playing..." : "Tap to play"}</p>
+                  <div style={{ marginTop: 8 }}><ProgressBar progress={playing ? ((currentChapter + 1) / story.chapters) * 100 : 0} color={story.color} height={4} /></div>
+                </div>
+              </div>
+            </div>
+            <h3 style={{ fontFamily: FONTS.display, fontSize: 18, color: COLORS.gray900, marginBottom: 14 }}>Chapters</h3>
+            {chapterTitles.map((ch, i) => (
+              <div key={i} onClick={() => setCurrentChapter(i)}
+                style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", background: i === currentChapter ? story.color + "0C" : COLORS.white, borderRadius: 14, marginBottom: 8, cursor: "pointer", border: "1px solid " + (i === currentChapter ? story.color + "33" : COLORS.gray200), transition: "all 0.2s" }}>
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: i <= currentChapter ? story.color : COLORS.gray200, color: i <= currentChapter ? "white" : COLORS.gray500, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, fontFamily: FONTS.mono }}>
+                  {i < currentChapter ? <IconCheck /> : i + 1}
+                </div>
+                <span style={{ fontSize: 14, fontWeight: i === currentChapter ? 700 : 500, color: i === currentChapter ? story.color : COLORS.gray700 }}>{ch}</span>
+              </div>
+            ))}
+            <div style={{ marginTop: 20, background: COLORS.white, borderRadius: 20, padding: 20, border: "1px solid " + COLORS.gray200 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: COLORS.gray900, marginBottom: 8 }}>About This Story</h3>
+              <p style={{ fontSize: 13, color: COLORS.gray700, lineHeight: 1.7 }}>{story.preview}</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ─── PROGRESS SCREEN ───
+    function ProgressScreen() {
+      const totalXP = 225;
+      const [toggledActions, setToggledActions] = useState({});
+      const handleToggle = (id) => setToggledActions(prev => ({ ...prev, [id]: !prev[id] }));
+
+      return (
+        <div style={{ background: COLORS.offWhite, minHeight: "100%", paddingBottom: 100 }}>
+          <div style={{ padding: "48px 24px 20px" }}>
+            <h1 style={{ fontFamily: FONTS.display, fontSize: 28, color: COLORS.gray900 }}>My Progress</h1>
+            <p style={{ fontSize: 14, color: COLORS.gray500, marginTop: 4 }}>Track your conservation journey</p>
+          </div>
+          <div style={{ padding: "0 24px", marginBottom: 24 }}>
+            <div style={{ background: "linear-gradient(135deg, " + COLORS.forest + ", " + COLORS.canopy + ")", borderRadius: 24, padding: 24, color: "white", position: "relative", overflow: "hidden" }}>
+              <div style={{ position: "absolute", top: -20, right: -20, width: 100, height: 100, borderRadius: "50%", background: "rgba(255,255,255,0.06)" }} />
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                <div>
+                  <p style={{ fontSize: 11, color: COLORS.mint, textTransform: "uppercase", letterSpacing: 1.5, fontWeight: 600 }}>Level 3</p>
+                  <h2 style={{ fontFamily: FONTS.display, fontSize: 24 }}>Forest Explorer</h2>
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <p style={{ fontSize: 36, fontWeight: 700, fontFamily: FONTS.mono }}>{totalXP}</p>
+                  <p style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 1, opacity: 0.7 }}>Total XP</p>
+                </div>
+              </div>
+              <ProgressBar progress={56} color={COLORS.mint} height={6} />
+              <p style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", marginTop: 8 }}>175 XP to Level 4 — Canopy Guardian</p>
+            </div>
+          </div>
+          <div style={{ padding: "0 24px", marginBottom: 24 }}>
+            <h2 style={{ fontFamily: FONTS.display, fontSize: 20, color: COLORS.gray900, marginBottom: 14 }}>Badges</h2>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+              {BADGES.map((b, i) => (
+                <div key={b.id} style={{ background: COLORS.white, borderRadius: 18, padding: "18px 10px", textAlign: "center", border: "1px solid " + (b.earned ? COLORS.leaf + "33" : COLORS.gray200), opacity: b.earned ? 1 : 0.55, position: "relative", animation: "fadeInUp 0.5s ease-out " + (0.08 * i) + "s both" }}>
+                  {!b.earned && <div style={{ position: "absolute", top: 8, right: 8, color: COLORS.gray300 }}><IconLock /></div>}
+                  <span style={{ fontSize: 32, display: "block", filter: b.earned ? "none" : "grayscale(1)" }}>{b.emoji}</span>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: COLORS.gray900, marginTop: 8 }}>{b.name}</p>
+                  <p style={{ fontSize: 10, color: COLORS.gray500, marginTop: 2 }}>{b.desc}</p>
+                  <p style={{ fontSize: 11, color: COLORS.canopy, fontWeight: 600, fontFamily: FONTS.mono, marginTop: 6 }}>+{b.xp} XP</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={{ padding: "0 24px" }}>
+            <h2 style={{ fontFamily: FONTS.display, fontSize: 20, color: COLORS.gray900, marginBottom: 14 }}>Today's Eco Actions</h2>
+            {ECO_ACTIONS.map((a, i) => {
+              const isDone = a.done || toggledActions[a.id];
+              return (
+                <div key={a.id} onClick={() => !a.done && handleToggle(a.id)}
+                  style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", background: isDone ? COLORS.canopy + "08" : COLORS.white, borderRadius: 14, marginBottom: 8, cursor: a.done ? "default" : "pointer", border: "1px solid " + (isDone ? COLORS.canopy + "22" : COLORS.gray200), transition: "all 0.25s", animation: "fadeInUp 0.5s ease-out " + (0.08 * i) + "s both" }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, background: isDone ? COLORS.canopy : COLORS.gray200, color: isDone ? "white" : COLORS.gray500, display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.3s" }}>
+                    {isDone ? <IconCheck /> : <span style={{ fontSize: 18 }}>{a.icon}</span>}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: 14, fontWeight: 600, color: isDone ? COLORS.canopy : COLORS.gray900, textDecoration: isDone ? "line-through" : "none" }}>{a.title}</p>
+                  </div>
+                  <span style={{ fontSize: 12, fontWeight: 600, fontFamily: FONTS.mono, color: isDone ? COLORS.canopy : COLORS.gray500 }}>+{a.xp} XP</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    // ─── MAIN APP ───
+    function GentingWildApp() {
+      const [screen, setScreen] = useState("home");
+      const [prevScreen, setPrevScreen] = useState(null);
+      const [selectedTrail, setSelectedTrail] = useState(null);
+      const [selectedWildlife, setSelectedWildlife] = useState(null);
+      const [selectedStory, setSelectedStory] = useState(null);
+      const containerRef = useRef(null);
+
+      const navigate = (s) => { setPrevScreen(screen); setScreen(s); if (containerRef.current) containerRef.current.scrollTop = 0; };
+      const goBack = () => { if (prevScreen) { setScreen(prevScreen); setPrevScreen(null); } else setScreen("home"); if (containerRef.current) containerRef.current.scrollTop = 0; };
+
+      const navItems = [
+        { id: "home", label: "Home", icon: <IconHome /> },
+        { id: "trails", label: "Trails", icon: <IconMap /> },
+        { id: "wildlife", label: "AR Scan", icon: <IconCamera /> },
+        { id: "stories", label: "Stories", icon: <IconBook /> },
+        { id: "progress", label: "Progress", icon: <IconAward /> },
+      ];
+      const currentNav = ["home", "trails", "wildlife", "stories", "progress"].includes(screen) ? screen : prevScreen || "home";
+
+      const renderScreen = () => {
+        switch (screen) {
+          case "home": return <HomeScreen onNavigate={navigate} setSelectedTrail={setSelectedTrail} setSelectedWildlife={setSelectedWildlife} setSelectedStory={setSelectedStory} />;
+          case "trails": return <TrailsScreen onNavigate={navigate} setSelectedTrail={setSelectedTrail} />;
+          case "trailDetail": return <TrailDetailScreen trail={selectedTrail} onBack={goBack} />;
+          case "wildlife": return <WildlifeScreen setSelectedWildlife={setSelectedWildlife} onNavigate={navigate} />;
+          case "wildlifeDetail": return <WildlifeDetailScreen wildlife={selectedWildlife} onBack={goBack} />;
+          case "stories": return <StoriesScreen setSelectedStory={setSelectedStory} onNavigate={navigate} />;
+          case "storyDetail": return <StoryDetailScreen story={selectedStory} onBack={goBack} />;
+          case "progress": return <ProgressScreen />;
+          default: return <HomeScreen onNavigate={navigate} setSelectedTrail={setSelectedTrail} setSelectedWildlife={setSelectedWildlife} setSelectedStory={setSelectedStory} />;
+        }
+      };
+
+      return (
+        <div style={{ width: 393, maxHeight: 852, height: "100vh", background: COLORS.offWhite, borderRadius: 44, overflow: "hidden", boxShadow: "0 24px 80px rgba(0,0,0,0.4), 0 0 0 12px #111, 0 0 0 14px #333", position: "relative", display: "flex", flexDirection: "column" }}>
+          <div style={{ height: 50, position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 6 }}>
+            <div style={{ width: 80, height: 5, borderRadius: 3, background: "rgba(0,0,0,0.15)" }} />
+          </div>
+          <div ref={containerRef} style={{ flex: 1, overflowY: "auto", overflowX: "hidden" }}>{renderScreen()}</div>
+          <div style={{ height: 84, background: "rgba(255,255,255,0.95)", backdropFilter: "blur(20px)", borderTop: "1px solid " + COLORS.gray200, display: "flex", alignItems: "flex-start", justifyContent: "space-around", paddingTop: 10, paddingBottom: 20, position: "relative", flexShrink: 0 }}>
+            {navItems.map(item => {
+              const active = currentNav === item.id;
+              return (
+                <button key={item.id} onClick={() => navigate(item.id)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer", color: active ? COLORS.canopy : COLORS.gray500, transition: "all 0.2s", padding: "4px 12px", transform: active ? "scale(1.05)" : "scale(1)" }}>
+                  {item.id === "wildlife" ? (
+                    <div style={{ width: 48, height: 48, borderRadius: "50%", marginTop: -18, background: active ? "linear-gradient(135deg, " + COLORS.canopy + ", " + COLORS.leaf + ")" : COLORS.gray200, color: active ? "white" : COLORS.gray500, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: active ? "0 6px 20px " + COLORS.canopy + "44" : "none", transition: "all 0.3s" }}>{item.icon}</div>
+                  ) : (
+                    <div style={{ height: 24, display: "flex", alignItems: "center" }}>{item.icon}</div>
+                  )}
+                  <span style={{ fontSize: 10, fontWeight: active ? 700 : 500, letterSpacing: 0.3 }}>{item.label}</span>
+                  {active && <div style={{ width: 4, height: 4, borderRadius: "50%", background: COLORS.canopy }} />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<GentingWildApp />);
+  </script>
+</body>
+</html>
